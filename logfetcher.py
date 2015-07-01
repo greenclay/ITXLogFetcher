@@ -32,15 +32,9 @@ def get_matchinglogs(path, datefrom, datetto):
             if datefrom <= datetoday and datetoday <= datetto:
                 matchingfiles.append([file, filename])
     except WindowsError, err:
-        print err.strerror
-        print err.filename
-        print err.winerror
-        if err.winerror == 3:
-            print("Specified log path not found!")
-            matchingfiles = 3
-        elif err.winerror == 53:
-            print("Specified network path not found!")
-            matchingfiles = 53
+        print("Error with: " + err.filename)
+        print("Error " + str(err.winerror) + " - " + err.strerror)
+        matchingfiles = "Error " + str(err.winerror) + " - " + err.strerror
 
     return matchingfiles
 

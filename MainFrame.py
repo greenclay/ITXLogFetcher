@@ -6,7 +6,7 @@ from OptionsPanel import OptionsPanel
 class MainFrame(wx.Frame):
     """Main Frame holding the main panel."""
     def __init__(self, parent, title):
-        super(MainFrame, self).__init__(parent, title=title, size=(500,500), pos=(500,300))
+        super(MainFrame, self).__init__(parent, title=title, size=(600,600), pos=(500,300))
         panel = wx.Panel(self)
 
         options_panel = OptionsPanel(panel)
@@ -14,9 +14,8 @@ class MainFrame(wx.Frame):
 
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(filelist_panel, 2, wx.EXPAND, border = 5)
-        sizer.Add(options_panel, 1, wx.EXPAND)
-        # sizer.Add(date_panel, 1, border = 5)
+        sizer.Add(filelist_panel, 3, wx.EXPAND | wx.ALL, border = 10)
+        sizer.Add(options_panel, 1, wx.EXPAND | wx.ALL, border = 10)
         panel.SetSizerAndFit(sizer)
         panel.Layout()
         self.Show()
