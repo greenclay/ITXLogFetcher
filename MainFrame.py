@@ -14,7 +14,7 @@ class MainFrame(wx.Frame):
 
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(filelist_panel, 3, wx.EXPAND | wx.ALL, border = 10)
+        sizer.Add(filelist_panel, 3, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border = 10)
         sizer.Add(options_panel, 1, wx.EXPAND | wx.ALL, border = 10)
         panel.SetSizerAndFit(sizer)
         panel.Layout()
