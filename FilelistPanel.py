@@ -41,8 +41,8 @@ class FilelistPanel(wx.Panel):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         ''' INITIALIZE calendar boxes '''
-        self.datefrom = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(85,-1))
-        self.dateto = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(85, -1))
+        self.datefrom = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(135,-1))
+        self.dateto = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(130, -1))
 
         """ set default day"""
         datefrom_date = wx.DateTime()
@@ -57,12 +57,6 @@ class FilelistPanel(wx.Panel):
         datetolabel = wx.StaticText(self, -1, "To: ")
 
 
-        """ INITIALIZE Sort by column selector Combo box """
-        sortingChoices = ["File name", "Modified date", "File path"]
-        cb = wx.ComboBox(self, 500, "Sort files by...", (0, 0),(100, -1),
-                         sortingChoices, style=wx.CB_DROPDOWN | wx.CB_READONLY)
-        cb.Bind(wx.EVT_COMBOBOX, self.OnSortColumnByDate)
-
         # apply button
         applybutton = wx.Button(self, -1, label = "Search")
         applybutton.Bind(wx.EVT_BUTTON, self.OnApply)
@@ -73,13 +67,11 @@ class FilelistPanel(wx.Panel):
 
         ''' Add controls to Sizer '''
         hsizer.Add(datefromlabel, 0, wx.ALIGN_CENTER_VERTICAL)
-        hsizer.Add(self.datefrom, 1)
-        hsizer.Add((30, 0), 0)
+        hsizer.Add(self.datefrom, 0)
+        hsizer.Add((10, 0), 0)
         hsizer.Add(datetolabel, 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer.Add(self.dateto, 1)
-        hsizer.Add((10, 0), 0)
-        hsizer.Add(cb, 1)
-        hsizer.Add((10, 0), 0)
+        hsizer.Add((10, 0), 1)
 
         hsizer.Add(applybutton, 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer.AddSpacer((10, 0))
@@ -88,16 +80,19 @@ class FilelistPanel(wx.Panel):
         return hsizer
 
     def OnSortColumnByDate(self, event):
-        self.matchingfiles = sorted(self.matchingfiles, key = itemgetter(3)) # sort by date
-        print self.matchingfiles
+        sort_selection = event.GetEventObject().GetCurrentSelection() # 0 = file name, 1 = date, 2 = path
+        if sort_selection == 1:
+            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower() )  #  sort by filename
+        elif sort_selection == 2:
+            self.matchingfiles = sorted(self.matchingfiles, key = itemgetter(3)) # sort by date
+        elif sort_selection == 3:
+            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower()) # sort by path
+
         self.filelist.DeleteAllItems()
         for file in self.matchingfiles:
             date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
             path = "C:\\" + file[0][len(file[2]) + 6:]
             self.filelist.AppendItem([file[1], date, path, file])
-
-        # self.matchingfiles = sorted(self.matchingfiles, key = itemgetter(1)) # sort by filename
-        # self.matchingfiles = sorted(self.matchingfiles, key = itemgetter(0)) # sort by path
 
     # When the "search" button is pressed look for log files that match the specified dates and update the file list
     def OnApply(self, event):

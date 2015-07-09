@@ -24,6 +24,7 @@ class OptionsPanel(wx.Panel):
 
         desktoppath = os.path.expanduser('~') + '\Desktop\logs'
         self.logdestination_text = wx.TextCtrl(self, -1, desktoppath, size = (200, -1))
+        self.logdestination_text.AutoCompleteDirectories()
 
         hsizer3.Add(wx.StaticText(self, -1, "Folder to copy logs to: "), 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer3.Add(self.logdestination_text, 1, wx.ALIGN_CENTER_VERTICAL)
@@ -42,6 +43,8 @@ class OptionsPanel(wx.Panel):
         self.SetSizer(sizer)
         self.Layout()
 
+
+
     def InitZipOptions(self):
         """ zip options """
         # Zip or not option radio boxes
@@ -56,9 +59,8 @@ class OptionsPanel(wx.Panel):
         # zip file name control text
         zip_filename_statictxt = wx.StaticText(self, -1, "File name: ")
         zip_filename = wx.TextCtrl(self, -1, "log_file.zip", size = (300, -1))
-
         # Save zip option button
-        savezipoption_button = wx.Button(self, -1, "Save zip file config", (25, 25))
+        savezipoption_button = wx.Button(self, -1, "Save current zip file config", (25, 25))
         self.Bind(wx.EVT_BUTTON, self.OnSaveZipOption, savezipoption_button)
 
         hsizer4.Add(radiobuttons, 0)
@@ -69,16 +71,33 @@ class OptionsPanel(wx.Panel):
         hsizer4.Add(zip_filename, 1, wx.ALIGN_CENTER_VERTICAL)
         return hsizer4, radiobuttons, zip_filename
 
+
+    def InitSortByOptions(self):
+        """ INITIALIZE Sort by column selector Combo box """
+        sortingChoices = ["Sort files by...", "File name", "Modified date", "File path"]
+        cb = wx.ComboBox(self, -1, "Sort files by...", (0, 0), (148, -1),
+                         sortingChoices, style = wx.CB_DROPDOWN | wx.CB_READONLY)
+        self.Bind(wx.EVT_COMBOBOX, self.OnSortColumnByDate, cb)
+
+        return cb
+
     def InitTextCtrlAutoComplete(self):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         default_server_choices = ["YUKI-PC", "ITX1503A", "ITX1503B", "ITX1511A", "ITX1511B"]
 
-        servername_txtctrl = TextCtrlAutoComplete.TextCtrlAutoComplete(self, choices = default_server_choices, dropDownClick=True)
-        # servername_ctrltxt.SetValue("YUKI-PC")
+        # servername_txtctrl = TextCtrlAutoComplete.TextCtrlAutoComplete(self, choices = default_server_choices, dropDownClick=True)
+        servername_txtctrl = wx.TextCtrl(self, -1, size=(134,-1))
+        servername_txtctrl.AutoComplete( default_server_choices)
+
+
         """ set default server name value for testing """
+        # servername_txtctrl.SetValue("YUKI-PC")
+
+        cb = self.InitSortByOptions()
         hsizer.Add(wx.StaticText(self, -1, "Server: "), 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer.Add(servername_txtctrl, 0)
-
+        hsizer.Add((30,0),0)
+        hsizer.Add(cb, 0)
         return hsizer, servername_txtctrl
 
     def InitCheckBoxes(self):
@@ -113,6 +132,8 @@ class OptionsPanel(wx.Panel):
         vsizer.Add(hsizer, 1, wx.EXPAND)
         return vsizer, checklist_group
 
+    def OnSortColumnByDate(self, event):
+        self.filelist_panel.OnSortColumnByDate(event)
 
     def OpenNetworkFolderButton(self, event):
         dlg = wx.DirDialog(

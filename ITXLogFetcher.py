@@ -9,13 +9,14 @@ class MainFrame(wx.Frame):
         super(MainFrame, self).__init__(parent, title=title, size=(700,800), pos=(500,100))
         panel = wx.Panel(self)
 
-        options_panel = OptionsPanel(panel)
-        filelist_panel = FilelistPanel(panel, options_panel)
-
+        self.a = "a"
+        self.options_panel = OptionsPanel(panel)
+        self.filelist_panel = FilelistPanel(panel, self.options_panel)
+        self.options_panel.filelist_panel = self.filelist_panel
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(filelist_panel, 3, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border = 10)
-        sizer.Add(options_panel, 1, wx.EXPAND | wx.ALL, border = 10)
+        sizer.Add(self.filelist_panel, 3, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border = 10)
+        sizer.Add(self.options_panel, 1, wx.EXPAND | wx.ALL, border = 10)
         panel.SetSizerAndFit(sizer)
         panel.Layout()
         self.Show()
