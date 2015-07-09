@@ -11,11 +11,8 @@ def read_config():
                 init_config()
                 return 0
             else:
-                print configfile[0]
                 line = configfile[0].split("=")
-                print line
                 zipoption = int(line[1])
-                print "line[1] = " + str(zipoption)
                 if zipoption == 0 or zipoption == 1:
                     return zipoption
                 else:

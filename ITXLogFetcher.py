@@ -1,4 +1,4 @@
-__author__ = 'Administrator'
+__author__ = 'YSawa@DIRECTV.com'
 import wx
 from FilelistPanel import FilelistPanel
 from OptionsPanel import OptionsPanel
@@ -6,7 +6,7 @@ from OptionsPanel import OptionsPanel
 class MainFrame(wx.Frame):
     """Main Frame holding the main panel."""
     def __init__(self, parent, title):
-        super(MainFrame, self).__init__(parent, title=title, size=(600,600), pos=(500,300))
+        super(MainFrame, self).__init__(parent, title=title, size=(700,800), pos=(500,100))
         panel = wx.Panel(self)
 
         options_panel = OptionsPanel(panel)
@@ -22,5 +22,5 @@ class MainFrame(wx.Frame):
 
 
 app = wx.App()
-ex = MainFrame(None, title="Size")
+ex = MainFrame(None, title="ITX Log Fetcher ver 1.0")
 app.MainLoop()

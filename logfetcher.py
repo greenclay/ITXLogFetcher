@@ -6,6 +6,9 @@ from datetime import date
 import subprocess
 import write_zip
 
+""" Format of matchingfiles list """
+""" file = [file path, file name, server name, time stamp]"""
+
 # looks at when the file was last modified and sees if it was this or last month
 # returns True if it was modified within the last month and False if it was not
 def get_matchinglogs(path, datefrom, datetto, servername):
@@ -20,9 +23,9 @@ def get_matchinglogs(path, datefrom, datetto, servername):
                 print("File " + filename + " does not exist")
                 mtime = 0
 
-            datetoday = date.fromtimestamp(mtime)
-            if datefrom <= datetoday and datetoday <= datetto:
-                matchingfiles.append([file, filename, servername])
+            timestamp = date.fromtimestamp(mtime)
+            if datefrom <= timestamp and timestamp <= datetto:
+                matchingfiles.append([file, filename, servername, timestamp])
     except WindowsError, err:
         print("Error with: " + err.filename)
         print("Error " + str(err.winerror) + " - " + err.strerror)
@@ -38,11 +41,11 @@ def copyfiles(files_to_copy, log_destination_path, source_server_name, zip_filen
         except OSError:
             print("OSError - os.makedirs - " + log_destination_path)
 
-    for filee in files_to_copy:
-        print "copy2 - 1 - " + filee[1]
-        print "copy2 - 2 - " + log_destination_path
+    for myfile in files_to_copy:
+        # print "shutil.copy2, myfile[1] aka filename: " + myfile[1]
+        # print "shutil.copy2, log_destination_path: " + log_destination_path
         # shutil.copy2(filee[0], log_destination_path + "\\" + source_server_name + "_" + filee[1])
-        shutil.copy2(filee[0], log_destination_path)
+        shutil.copy2(myfile[0], log_destination_path + "\\" +  myfile[2] + "_" +  myfile[1])
 
     if zipoption == 1:
         # if zipoption == 1 then combine the files and write a zip file
