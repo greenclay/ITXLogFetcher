@@ -4,14 +4,24 @@ import logfetcher
 from datetime import date
 from datetime import datetime
 import wx.dataview as dv
-from operator import itemgetter
+import config
+
+import DataModel
+
 # Class contains the file list and date controls
 class FilelistPanel(wx.Panel):
     """Constructor"""
-    def __init__(self, parent, options_panel):
+
+    def testing2(self):
+        datefrom_date = wx.DateTime()
+        datefrom_date.Set(1, 6, 2015)
+        self.datefrom.SetValue(datefrom_date)
+        self.OnApply(self)
+        self.OnSave(self)
+
+    def __init__(self, parent):
         self.matchingfiles = []
         wx.Panel.__init__(self, parent = parent)
-        self.options_panel = options_panel
         hsizer = self.InitDateUI()
 
         self.filelist = self.InitFilelist()
@@ -28,41 +38,43 @@ class FilelistPanel(wx.Panel):
         self.SetSizer(sizer)
 
     """ intalize the file list """
+
     def InitFilelist(self):
         filelist = dv.DataViewListCtrl(self, style = dv.DV_MULTIPLE | dv.DV_ROW_LINES)
         self.filename_col = filelist.AppendTextColumn("File name", width = 170)
-        self.modifieddate_col = filelist.AppendTextColumn("Last modified date", width = 95)
-        self.path_col = filelist.AppendTextColumn("Path", width = 380)
+        self.modifieddate_col = filelist.AppendTextColumn("Last modified date", width = 105)
+        self.path_col = filelist.AppendTextColumn("Path", width = 393)
         # self.modifieddate_col.Bind(wx.EVT_BUTTON, self.OnSortColumnByDate)
-        print self.filename_col.Title
         return filelist
 
     def InitDateUI(self):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         ''' INITIALIZE calendar boxes '''
-        self.datefrom = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(135,-1))
-        self.dateto = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size=(130, -1))
+        self.datefrom = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size = (135, -1))
+        self.dateto = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size = (146, -1))
 
         """ set default day"""
         datefrom_date = wx.DateTime()
         yesterday_date = self.get_prevday()
-        datefrom_date.Set(yesterday_date.day, yesterday_date.month-1, yesterday_date.year)
+        datefrom_date.Set(yesterday_date.day, yesterday_date.month - 1, yesterday_date.year)
 
         self.datefrom.SetValue(datefrom_date)
         self.label = wx.StaticText(self, -1, "")
 
         # labels
-        datefromlabel = wx.StaticText(self, -1, label = "From: ", size=(40,-1))
+        datefromlabel = wx.StaticText(self, -1, label = "From: ", size = (40, -1))
         datetolabel = wx.StaticText(self, -1, "To: ")
 
 
         # apply button
         applybutton = wx.Button(self, -1, label = "Search")
         applybutton.Bind(wx.EVT_BUTTON, self.OnApply)
+        applybutton.SetDefault()
 
         # apply button
         savebutton = wx.Button(self, -1, label = "Save to folder")
+
         savebutton.Bind(wx.EVT_BUTTON, self.OnSave)
 
         ''' Add controls to Sizer '''
@@ -70,7 +82,7 @@ class FilelistPanel(wx.Panel):
         hsizer.Add(self.datefrom, 0)
         hsizer.Add((10, 0), 0)
         hsizer.Add(datetolabel, 0, wx.ALIGN_CENTER_VERTICAL)
-        hsizer.Add(self.dateto, 1)
+        hsizer.Add(self.dateto, 0)
         hsizer.Add((10, 0), 1)
 
         hsizer.Add(applybutton, 0, wx.ALIGN_CENTER_VERTICAL)
@@ -80,13 +92,15 @@ class FilelistPanel(wx.Panel):
         return hsizer
 
     def OnSortColumnByDate(self, event):
-        sort_selection = event.GetEventObject().GetCurrentSelection() # 0 = file name, 1 = date, 2 = path
+        sort_selection = event.GetEventObject().GetCurrentSelection()  # 0 = file name, 1 = date, 2 = path
+        # DataModel.sortColumn(sort_selection)
+
         if sort_selection == 1:
-            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower() )  #  sort by filename
+            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower())  # sort by filename
         elif sort_selection == 2:
-            self.matchingfiles = sorted(self.matchingfiles, key = itemgetter(3)) # sort by date
+            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[3])  # sort by date
         elif sort_selection == 3:
-            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower()) # sort by path
+            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower())  # sort by path
 
         self.filelist.DeleteAllItems()
         for file in self.matchingfiles:
@@ -113,7 +127,7 @@ class FilelistPanel(wx.Panel):
         error = False
         for path in log_path:
             servername = self.options_panel.get_servername()
-            mylist = logfetcher.main(path, servername, datefrom = picked_datefrom, datetto = picked_dateto)
+            mylist = logfetcher.get_matchinglogs(path, servername, datefrom = picked_datefrom, dateto = picked_dateto)
             error = self.ErrorDialog(mylist, path, servername)
             if error:
                 return
@@ -122,7 +136,6 @@ class FilelistPanel(wx.Panel):
         # update the file list box
         self.filelist.DeleteAllItems()
 
-        print self.matchingfiles
         for file in self.matchingfiles:
             date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
             path = "C:\\" + file[0][len(file[2]) + 6:]
@@ -132,31 +145,35 @@ class FilelistPanel(wx.Panel):
 
 
     def OnSave(self, event):
-        # self.OnApply(self)
-        print "OnSave:"
-        # print self.filelist.GetSelectedRow()
-        print self.filelist.GetSelectedItemsCount()
         selected = self.filelist.GetSelections()
         selectedfiles = []
         for s in selected:
-            # print self.filelist.GetValue(s,1)
-            print self.filelist.GetValue(s.GetID() - 1, 3)
             selectedfiles.append(self.filelist.GetValue(s.GetID() - 1, 3))
 
         zipoption = self.options_panel.get_zipoption()
         if len(selectedfiles) == 0:
-            logfetcher.copyfiles(self.matchingfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
-                                 self.options_panel.zip_filename.GetLineText(0),
-                                 zipoption)
+            err = logfetcher.copyfiles(self.matchingfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
+                                       self.options_panel.zip_filename.GetLineText(0),
+                                       self, zipoption)
         else:
-            logfetcher.copyfiles(selectedfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
-                                 self.options_panel.zip_filename.GetLineText(0), zipoption)
+            err = logfetcher.copyfiles(selectedfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
+                                       self.options_panel.zip_filename.GetLineText(0), self, zipoption)
+        if (err != None):
+            self.ErrorDialog(err, "", "")
 
-    # If there is a error with opening Windows paths show an error to user
+        ''' save the typed in server names to history.txt '''
+        self.options_panel.server_choices.append(self.options_panel.get_servername())
+        config.write_servername_history(self.options_panel.server_choices)
+        self.options_panel.servername_txtctrl.AutoComplete(self.options_panel.server_choices)
+
+        # output results to the screen
+        self.result_text.SetLabel("Saved " + str(len(self.matchingfiles)) + " files")
+
+    # If there is a error with opening Windows paths, servers, file permissions etc show an error to user
     def ErrorDialog(self, matchingfiles, path, servername):
         if type(matchingfiles) is not list:
             errorcode = matchingfiles
-
+            print "\nERROR\n" + errorcode + "\n" + servername + "\n" + path + "\n"
             if "Error 53" in errorcode or "Error 1396" in errorcode:
                 dlg = wx.MessageDialog(self, errorcode + "\n" + servername, 'Error', wx.OK | wx.ICON_INFORMATION)
             else:

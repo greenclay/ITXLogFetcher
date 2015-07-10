@@ -1,17 +1,23 @@
 __author__ = 'Administrator'
 import wx
 import os
-import TextCtrlAutoComplete
 import config
 
+import DataModel
+
 class OptionsPanel(wx.Panel):
+    ''' Methods to set varibles up for quick testing'''
+
+    def testing1(self):
+        self.servername_txtctrl.SetValue("YUKI-PC")
+        self.checklist_group[0][0].SetValue(True)
     def __init__(self, parent):
         wx.Panel.__init__(self, parent = parent)
         self.logsource_list = []
         self.zipoption = config.read_config()
 
         ''' Server choice controls '''
-        hsizer1, self.servername_txtctrl = self.InitTextCtrlAutoComplete()
+        hsizer1, self.servername_txtctrl, self.server_choices = self.InitServernameTextCtr()
 
         ''' Initialize check buttons with log path controls'''
         hsizer2, self.checklist_group = self.InitCheckBoxes()
@@ -28,7 +34,7 @@ class OptionsPanel(wx.Panel):
 
         hsizer3.Add(wx.StaticText(self, -1, "Folder to copy logs to: "), 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer3.Add(self.logdestination_text, 1, wx.ALIGN_CENTER_VERTICAL)
-        hsizer3.Add((10,0),0)
+        hsizer3.Add((10, 0), 0)
         hsizer3.Add(folderselect_button, 0, wx.ALIGN_CENTER_VERTICAL)
 
         ''' zip options control '''
@@ -42,7 +48,6 @@ class OptionsPanel(wx.Panel):
         sizer.Add(hsizer4, 0, wx.EXPAND | wx.TOP, border = 15)
         self.SetSizer(sizer)
         self.Layout()
-
 
 
     def InitZipOptions(self):
@@ -81,34 +86,29 @@ class OptionsPanel(wx.Panel):
 
         return cb
 
-    def InitTextCtrlAutoComplete(self):
+    def InitServernameTextCtr(self):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        default_server_choices = ["YUKI-PC", "ITX1503A", "ITX1503B", "ITX1511A", "ITX1511B"]
+        server_choices = config.read_servername_history()
 
         # servername_txtctrl = TextCtrlAutoComplete.TextCtrlAutoComplete(self, choices = default_server_choices, dropDownClick=True)
-        servername_txtctrl = wx.TextCtrl(self, -1, size=(134,-1))
-        servername_txtctrl.AutoComplete( default_server_choices)
-
-
-        """ set default server name value for testing """
-        # servername_txtctrl.SetValue("YUKI-PC")
+        servername_txtctrl = wx.TextCtrl(self, -1, size = (134, -1))
+        servername_txtctrl.AutoComplete(server_choices)
 
         cb = self.InitSortByOptions()
         hsizer.Add(wx.StaticText(self, -1, "Server: "), 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer.Add(servername_txtctrl, 0)
-        hsizer.Add((30,0),0)
+        hsizer.Add((30, 0), 0)
         hsizer.Add(cb, 0)
-        return hsizer, servername_txtctrl
+        return hsizer, servername_txtctrl, server_choices
 
     def InitCheckBoxes(self):
         description_text = wx.StaticText(self, -1, "Paths to the log files: ")
-        cb1 = wx.CheckBox(self, -1, "ITXLogs")#, (65, 40), (150, 20), wx.NO_BORDER)
-        cb2 = wx.CheckBox(self, -1, "MIRANDA")#, (65, 60), (150, 20), wx.NO_BORDER)
-        cb3 = wx.CheckBox(self, -1, "Other")#, (65, 80), (150, 20), wx.NO_BORDER)
+        cb1 = wx.CheckBox(self, -1, "ITXLogs")  # , (65, 40), (150, 20), wx.NO_BORDER)
+        cb2 = wx.CheckBox(self, -1, "MIRANDA")  # , (65, 60), (150, 20), wx.NO_BORDER)
+        cb3 = wx.CheckBox(self, -1, "Other")  # , (65, 80), (150, 20), wx.NO_BORDER)
         text1 = wx.TextCtrl(self, -1, "ITXLogs")
         text2 = wx.TextCtrl(self, -1, "MIRANDA_LOGS\TXPLAY\TXPlayTrace")
         self.otherpath_txtctrl = wx.TextCtrl(self, -1, "")
-
 
         open_networkfolder_button = wx.Button(self, -1, "Open", (25, 25))
         self.Bind(wx.EVT_BUTTON, self.OpenNetworkFolderButton, open_networkfolder_button)
@@ -126,7 +126,7 @@ class OptionsPanel(wx.Panel):
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
         hsizer.Add(self.otherpath_txtctrl, 1, wx.EXPAND | wx.ALIGN_LEFT | wx.TOP, 5)
-        hsizer.Add((10,-1))
+        hsizer.Add((10, -1))
         hsizer.Add(open_networkfolder_button, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.TOP, 5)
 
         vsizer.Add(hsizer, 1, wx.EXPAND)
@@ -151,7 +151,9 @@ class OptionsPanel(wx.Panel):
             # This returns a Python list of files that were selected.
             paths = dlg.GetPath()
             servername = self.get_servername()
-            self.otherpath_txtctrl.SetLabel(paths[len(servername)+6:])
+            if servername not in paths:
+                self.filelist_panel.ErrorDialog("You chose a local path. Please choose a path in the chosen server: " + servername, "", "")
+            self.otherpath_txtctrl.SetLabel(paths[len(servername) + 6:])
         # Compare this with the debug above; did we change working dirs?
 
         # Destroy the dialog. Don't do this until you are done with it!
