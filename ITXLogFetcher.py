@@ -1,8 +1,8 @@
 __author__ = 'YSawa@DIRECTV.com'
 import wx
-import config
 from FilelistPanel import FilelistPanel
 from OptionsPanel import OptionsPanel
+import logfetcher
 
 
 class ITXLogFetcher(wx.Frame):
@@ -26,9 +26,11 @@ class ITXLogFetcher(wx.Frame):
         self.Show()
 
         """ testing methods """
-        self.options_panel.testing1()
-        self.filelist_panel.testing2()
-        print len(self.filelist_panel.matchingfiles)
+        # logfetcher.testing3()
+        # self.options_panel.testing1()
+        # self.filelist_panel.testing2()
+        # print len(self.filelist_panel.matchingfiles)
+
 
 class App(wx.App):
     def __init__(self):
@@ -37,8 +39,8 @@ class App(wx.App):
     def OnExit(self):
         pass
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     app = App()
     frame = ITXLogFetcher(None, title = "ITX Log Fetcher ver 1.0")
     app.MainLoop()

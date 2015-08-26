@@ -29,6 +29,7 @@ class OptionsPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OpenFileButton, folderselect_button)
 
         desktoppath = os.path.expanduser('~') + '\Desktop\logs'
+        desktoppath = "C:\\logs"
         self.logdestination_text = wx.TextCtrl(self, -1, desktoppath, size = (200, -1))
         self.logdestination_text.AutoCompleteDirectories()
 
@@ -82,7 +83,7 @@ class OptionsPanel(wx.Panel):
         sortingChoices = ["Sort files by...", "File name", "Modified date", "File path"]
         cb = wx.ComboBox(self, -1, "Sort files by...", (0, 0), (148, -1),
                          sortingChoices, style = wx.CB_DROPDOWN | wx.CB_READONLY)
-        self.Bind(wx.EVT_COMBOBOX, self.OnSortColumnByDate, cb)
+        self.Bind(wx.EVT_COMBOBOX, self.OnSortColumnBySelection, cb)
 
         return cb
 
@@ -132,8 +133,8 @@ class OptionsPanel(wx.Panel):
         vsizer.Add(hsizer, 1, wx.EXPAND)
         return vsizer, checklist_group
 
-    def OnSortColumnByDate(self, event):
-        self.filelist_panel.OnSortColumnByDate(event)
+    def OnSortColumnBySelection(self, event):
+        self.filelist_panel.OnSortColumnBySelection(event)
 
     def OpenNetworkFolderButton(self, event):
         dlg = wx.DirDialog(

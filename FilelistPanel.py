@@ -5,14 +5,52 @@ from datetime import date
 from datetime import datetime
 import wx.dataview as dv
 import config
+import PopupDialog
 
-import DataModel
+from DataModel import DataModel
+
+class ProgressDialog:
+    def __init__(self):
+        message = "Copying files..."
+        max = 25
+
+        dlg = wx.ProgressDialog("Running...",
+                                message,
+                                maximum = max,
+                                parent = self,
+                                style = 0
+                                        | wx.PD_APP_MODAL
+                                        | wx.PD_CAN_ABORT
+                                        | wx.PD_CAN_SKIP
+                                        | wx.PD_ELAPSED_TIME
+                                # | wx.PD_ESTIMATED_TIME
+                                # | wx.PD_REMAINING_TIME
+                                # | wx.PD_AUTO_HIDE
+                                )
+
+        keepGoing = True
+        count = 0
+
+        while keepGoing and count < max:
+            count += 1
+            wx.MilliSleep(250)
+            wx.Yield()
+
+            if count >= max / 2:
+                (keepGoing, skip) = dlg.Pulse()
+            else:
+                (keepGoing, skip) = dlg.Pulse()
+
+        dlg.Destroy()
+    def destroy(self):
+        self.dialog.Destroy()
 
 # Class contains the file list and date controls
 class FilelistPanel(wx.Panel):
     """Constructor"""
 
     def testing2(self):
+        print DataModel.matchingfiles
         datefrom_date = wx.DateTime()
         datefrom_date.Set(1, 6, 2015)
         self.datefrom.SetValue(datefrom_date)
@@ -44,7 +82,7 @@ class FilelistPanel(wx.Panel):
         self.filename_col = filelist.AppendTextColumn("File name", width = 170)
         self.modifieddate_col = filelist.AppendTextColumn("Last modified date", width = 105)
         self.path_col = filelist.AppendTextColumn("Path", width = 393)
-        # self.modifieddate_col.Bind(wx.EVT_BUTTON, self.OnSortColumnByDate)
+        # self.modifieddate_col.Bind(wx.EVT_BUTTON, self.OnSortColumnBySelection)
         return filelist
 
     def InitDateUI(self):
@@ -91,25 +129,82 @@ class FilelistPanel(wx.Panel):
 
         return hsizer
 
-    def OnSortColumnByDate(self, event):
-        sort_selection = event.GetEventObject().GetCurrentSelection()  # 0 = file name, 1 = date, 2 = path
-        # DataModel.sortColumn(sort_selection)
+    def MVC_OnSortColumnBySelection(self, event):
+        '''
+        When the user selects "Sort by..." sort the filelist by the user's choice
+        :param event: wxpython event
+        :return: None
+        '''
+        # sort_selection has 3 choices:
+        # 0 = file name, 1 = date, 2 = path
+        sort_selection = event.GetEventObject().GetCurrentSelection()
+        DataModel.matchingfiles = self.matchingfiles
+        formatted_matchingfiles = DataModel.sortColumn(sort_selection)
 
-        if sort_selection == 1:
-            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower())  # sort by filename
-        elif sort_selection == 2:
-            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[3])  # sort by date
-        elif sort_selection == 3:
-            self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower())  # sort by path
-
+        # Clear the filelist and update it with the sorted matchingfiles
         self.filelist.DeleteAllItems()
-        for file in self.matchingfiles:
-            date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
-            path = "C:\\" + file[0][len(file[2]) + 6:]
-            self.filelist.AppendItem([file[1], date, path, file])
+        for myfile in formatted_matchingfiles:
+            self.filelist.AppendItem(myfile)
+
+    def OnSortColumnBySelection(self, event):
+        self.MVC_OnSortColumnBySelection(event)
+
+        # sort_selection = event.GetEventObject().GetCurrentSelection()  # 0 = file name, 1 = date, 2 = path
+        # DataModel.matchingfiles = self.matchingfiles
+        # print DataModel.sortColumn(sort_selection)
+        #
+        # if sort_selection == 1:
+        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower())  # sort by filename
+        # elif sort_selection == 2:
+        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[3])  # sort by date
+        # elif sort_selection == 3:
+        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower())  # sort by path
+        #
+        # self.filelist.DeleteAllItems()
+        # for file in self.matchingfiles:
+        #     date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
+        #     path = "C:\\" + file[0][len(file[2]) + 6:]
+        #     self.filelist.AppendItem([file[1], date, path, file])
 
     # When the "search" button is pressed look for log files that match the specified dates and update the file list
+    def ShowProgressBar(self, message):
+
+        message = "Copying files..."
+        max = 25
+
+        dlg = wx.ProgressDialog("Running...",
+                                message,
+                                maximum = max,
+                                parent = self,
+                                style = 0
+                                        | wx.PD_APP_MODAL
+                                        | wx.PD_CAN_ABORT
+                                        | wx.PD_CAN_SKIP
+                                        | wx.PD_ELAPSED_TIME
+                                        # | wx.PD_ESTIMATED_TIME
+                                        # | wx.PD_REMAINING_TIME
+                                # | wx.PD_AUTO_HIDE
+                                )
+
+        keepGoing = True
+        count = 0
+
+        while keepGoing and count < max:
+            count += 1
+            wx.MilliSleep(250)
+            wx.Yield()
+
+            if count >= max / 2:
+                (keepGoing, skip) = dlg.Pulse()
+            else:
+                (keepGoing, skip) = dlg.Pulse()
+
+        dlg.Destroy()
+
     def OnApply(self, event):
+        # self.ShowProgressBar("copying")
+        # pd = PopupDialog.ProgressDialog(self)
+
         picked_dateto = self.get_day(self.dateto)
         picked_datefrom = self.get_day(self.datefrom)
 

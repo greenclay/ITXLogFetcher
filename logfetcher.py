@@ -8,6 +8,12 @@ import write_zip
 
 """ Format of matchingfiles list """
 """ file = [file path, file name, server name, time stamp]"""
+test = False
+
+def testing3():
+    global test
+    test = True
+    print test
 
 # looks at when the file was last modified and sees if it was this or last month
 # returns True if it was modified within the last month and False if it was not
@@ -60,5 +66,8 @@ def copyfiles(files_to_copy, log_destination_path, source_server_name, zip_filen
         # if zipoption == 1 then combine the files and write a zip file
         write_zip.write(files_to_copy, log_destination_path, zip_filename)
 
-    # open a folder in Windows explorer
-    subprocess.Popen('explorer "{0}"'.format(log_destination_path))
+    global test
+    print test
+    if test == False:
+        # open a folder in Windows explorer
+        subprocess.Popen('explorer "{0}"'.format(log_destination_path))
