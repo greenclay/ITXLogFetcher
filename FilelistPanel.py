@@ -1,61 +1,42 @@
 __author__ = 'Administrator'
 import wx
-import logfetcher
-from datetime import date
-from datetime import datetime
 import wx.dataview as dv
 import config
+from LogFetcherThread import LogFetcherThread
+from LogFetcherThread import LogCopyerThread
 import PopupDialog
 
 from DataModel import DataModel
-
-class ProgressDialog:
-    def __init__(self):
-        message = "Copying files..."
-        max = 25
-
-        dlg = wx.ProgressDialog("Running...",
-                                message,
-                                maximum = max,
-                                parent = self,
-                                style = 0
-                                        | wx.PD_APP_MODAL
-                                        | wx.PD_CAN_ABORT
-                                        | wx.PD_CAN_SKIP
-                                        | wx.PD_ELAPSED_TIME
-                                # | wx.PD_ESTIMATED_TIME
-                                # | wx.PD_REMAINING_TIME
-                                # | wx.PD_AUTO_HIDE
-                                )
-
-        keepGoing = True
-        count = 0
-
-        while keepGoing and count < max:
-            count += 1
-            wx.MilliSleep(250)
-            wx.Yield()
-
-            if count >= max / 2:
-                (keepGoing, skip) = dlg.Pulse()
-            else:
-                (keepGoing, skip) = dlg.Pulse()
-
-        dlg.Destroy()
-    def destroy(self):
-        self.dialog.Destroy()
-
+import os
 # Class contains the file list and date controls
+''' wx.Panel Class which contains the top half of the app.
+    This is everything above the "Path to the log files: " line
+    Includes:
+    1. The file list, a DataViewListCtrl, which lists the found files on a server/folder path
+        Each row of the file list is a file that was found in a folder on the selected server.
+        The file list has 4 columns. The first column is the file name. The second is the file's last modified date.
+        The third column is the path to the file on the server. The fourth is the name of the server.
+        You can select certain files to save using shift/ctrl and the left mouse button.
+        If no files are selected then all files will be saved.
+    2. The "Search for files" "Save selected files to folder"
+        The "Search" button tells the app to search for the files in the selected server/folders and show the results on the file list.
+        "Save files to folder" button saves the selected files into the specified folder. The default save folder is "C:\ITXLogFetcher_logs"
+    3. The two DatePickerCtrl drop downs
+    4. The TextCtrl box to type in the server name
+    5. The "Sory files by..." drop down control
+    6. The "Folder to save log files to" TextCtrl box where you can type in the folder to save the logs files to
+
+'''
 class FilelistPanel(wx.Panel):
     """Constructor"""
 
     def testing2(self):
         print DataModel.matchingfiles
         datefrom_date = wx.DateTime()
-        datefrom_date.Set(1, 6, 2015)
+        datefrom_date.Set(24, 5, 2015)
         self.datefrom.SetValue(datefrom_date)
         self.OnApply(self)
-        self.OnSave(self)
+        # self.OnSave(self)
 
     def __init__(self, parent):
         self.matchingfiles = []
@@ -73,16 +54,18 @@ class FilelistPanel(wx.Panel):
         sizer.Add(self.result_text, 0, wx.TOP | wx.BOTTOM, 5)
         sizer.Add(hsizer, 0, wx.EXPAND)
 
+        # hsizer = self.InitSelectSaveFolderUI()
+        # sizer.Add(hsizer,0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
         self.SetSizer(sizer)
 
     """ intalize the file list """
 
     def InitFilelist(self):
         filelist = dv.DataViewListCtrl(self, style = dv.DV_MULTIPLE | dv.DV_ROW_LINES)
-        self.filename_col = filelist.AppendTextColumn("File name", width = 170)
-        self.modifieddate_col = filelist.AppendTextColumn("Last modified date", width = 105)
-        self.path_col = filelist.AppendTextColumn("Path", width = 393)
-        # self.modifieddate_col.Bind(wx.EVT_BUTTON, self.OnSortColumnBySelection)
+        filelist.AppendTextColumn("File name", width = 150)
+        filelist.AppendTextColumn("Last modified date", width = 110)
+        filelist.AppendTextColumn("Path", width = 355)
+        filelist.AppendTextColumn("Server", width = 98)
         return filelist
 
     def InitDateUI(self):
@@ -94,7 +77,7 @@ class FilelistPanel(wx.Panel):
 
         """ set default day"""
         datefrom_date = wx.DateTime()
-        yesterday_date = self.get_prevday()
+        yesterday_date = DataModel.get_prevday()
         datefrom_date.Set(yesterday_date.day, yesterday_date.month - 1, yesterday_date.year)
 
         self.datefrom.SetValue(datefrom_date)
@@ -106,12 +89,12 @@ class FilelistPanel(wx.Panel):
 
 
         # apply button
-        applybutton = wx.Button(self, -1, label = "Search")
+        applybutton = wx.Button(self, -1, label = "Search for files")
         applybutton.Bind(wx.EVT_BUTTON, self.OnApply)
         applybutton.SetDefault()
 
         # apply button
-        savebutton = wx.Button(self, -1, label = "Save to folder")
+        savebutton = wx.Button(self, -1, label = "Save selected files to folder")
 
         savebutton.Bind(wx.EVT_BUTTON, self.OnSave)
 
@@ -129,7 +112,7 @@ class FilelistPanel(wx.Panel):
 
         return hsizer
 
-    def MVC_OnSortColumnBySelection(self, event):
+    def OnSortColumnBySelection(self, event):
         '''
         When the user selects "Sort by..." sort the filelist by the user's choice
         :param event: wxpython event
@@ -138,7 +121,6 @@ class FilelistPanel(wx.Panel):
         # sort_selection has 3 choices:
         # 0 = file name, 1 = date, 2 = path
         sort_selection = event.GetEventObject().GetCurrentSelection()
-        DataModel.matchingfiles = self.matchingfiles
         formatted_matchingfiles = DataModel.sortColumn(sort_selection)
 
         # Clear the filelist and update it with the sorted matchingfiles
@@ -146,148 +128,64 @@ class FilelistPanel(wx.Panel):
         for myfile in formatted_matchingfiles:
             self.filelist.AppendItem(myfile)
 
-    def OnSortColumnBySelection(self, event):
-        self.MVC_OnSortColumnBySelection(event)
-
-        # sort_selection = event.GetEventObject().GetCurrentSelection()  # 0 = file name, 1 = date, 2 = path
-        # DataModel.matchingfiles = self.matchingfiles
-        # print DataModel.sortColumn(sort_selection)
-        #
-        # if sort_selection == 1:
-        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[1].lower())  # sort by filename
-        # elif sort_selection == 2:
-        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[3])  # sort by date
-        # elif sort_selection == 3:
-        #     self.matchingfiles = sorted(self.matchingfiles, key = lambda x: x[0].lower())  # sort by path
-        #
-        # self.filelist.DeleteAllItems()
-        # for file in self.matchingfiles:
-        #     date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
-        #     path = "C:\\" + file[0][len(file[2]) + 6:]
-        #     self.filelist.AppendItem([file[1], date, path, file])
-
-    # When the "search" button is pressed look for log files that match the specified dates and update the file list
-    def ShowProgressBar(self, message):
-
-        message = "Copying files..."
-        max = 25
-
-        dlg = wx.ProgressDialog("Running...",
-                                message,
-                                maximum = max,
-                                parent = self,
-                                style = 0
-                                        | wx.PD_APP_MODAL
-                                        | wx.PD_CAN_ABORT
-                                        | wx.PD_CAN_SKIP
-                                        | wx.PD_ELAPSED_TIME
-                                        # | wx.PD_ESTIMATED_TIME
-                                        # | wx.PD_REMAINING_TIME
-                                # | wx.PD_AUTO_HIDE
-                                )
-
-        keepGoing = True
-        count = 0
-
-        while keepGoing and count < max:
-            count += 1
-            wx.MilliSleep(250)
-            wx.Yield()
-
-            if count >= max / 2:
-                (keepGoing, skip) = dlg.Pulse()
-            else:
-                (keepGoing, skip) = dlg.Pulse()
-
-        dlg.Destroy()
-
+    '''
+    Called when user presses "Search for files" button
+    Creates LogFetcherThread to look for the files and displays a Pop up dialog with the progress on it
+    '''
     def OnApply(self, event):
-        # self.ShowProgressBar("copying")
-        # pd = PopupDialog.ProgressDialog(self)
 
-        picked_dateto = self.get_day(self.dateto)
-        picked_datefrom = self.get_day(self.datefrom)
+        # get the required info from the interface
+        picked_dateto = DataModel.get_day(self.dateto)
+        picked_datefrom = DataModel.get_day(self.datefrom)
 
-        # log_path = self.log_source.GetLineText(0)
-        log_path = self.options_panel.get_logsourcepath()
+        # Start a new thread and look for files that match the dates and directories
+        # Needs a new thread so ProgressDialog and LogFetcher can run in parallel.
+        # Otherwise ProgressDialog would wait for LogFetcher to complete before running
+        lfthread = LogFetcherThread(picked_datefrom, picked_dateto)
 
-        servername = self.options_panel.get_servername()
-        if len(servername) == 0:
-            self.ErrorDialog("Please select a server", "", "")
-            return
-        if len(log_path) == 0:
-            self.ErrorDialog("Please select at least one path to the log files", "", "")
-            return
-        self.matchingfiles = []
-        error = False
-        for path in log_path:
-            servername = self.options_panel.get_servername()
-            mylist = logfetcher.get_matchinglogs(path, servername, datefrom = picked_datefrom, dateto = picked_dateto)
-            error = self.ErrorDialog(mylist, path, servername)
-            if error:
-                return
-            self.matchingfiles = self.matchingfiles + mylist
+        # Show a popup with a progress bar
+        PopupDialog.ProgressDialog(self, lfthread, message = "Searching for files...")
+        self.UpdateFilelist()
 
-        # update the file list box
+    ''' Update the file list by deleting everything on it then adding all files in DataModel.matchingfiles
+    '''
+    def UpdateFilelist(self):
         self.filelist.DeleteAllItems()
-
-        for file in self.matchingfiles:
-            date = str(file[3].month).zfill(2) + "-" + str(file[3].day).zfill(2) + "-" + str(file[3].year)
-            path = "C:\\" + file[0][len(file[2]) + 6:]
-            self.filelist.AppendItem([file[1], date, path, file])
+        # for each matching file, format the date and path
+        # then add a row to the file list consisting of: (filename, last modified date, file path, server name, file object)
+        for myfile in DataModel.matchingfiles:
+            formatted_date = str(myfile[3].month).zfill(2) + "-" + str(myfile[3].day).zfill(2) + "-" + str(myfile[3].year)
+            path = "C:\\" + myfile[0][len(myfile[2]) + 6:]
+            self.filelist.AppendItem((myfile[1], formatted_date, path, myfile[2], myfile))
 
         self.result_text.SetLabel("Found " + str(len(self.matchingfiles)) + " files")
 
-
     def OnSave(self, event):
-        selected = self.filelist.GetSelections()
+        '''
+        Runs when "Save files to folder" button is clicked.
+        Takes the currently selected files in the filelist and copies them to the folder specified by the user.
+        If no files are selected then all the files are copied.
+        :param event:
+        :return:
+        '''
+        selected = self.filelist.GetSelections() # returns a list of the selected files in the filelist
         selectedfiles = []
         for s in selected:
-            selectedfiles.append(self.filelist.GetValue(s.GetID() - 1, 3))
+            # get the value of each selected file and append them to a list
+            selectedfiles.append(self.filelist.GetValue(s.GetID() - 1, 4))
 
-        zipoption = self.options_panel.get_zipoption()
         if len(selectedfiles) == 0:
-            err = logfetcher.copyfiles(self.matchingfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
-                                       self.options_panel.zip_filename.GetLineText(0),
-                                       self, zipoption)
+            lcthread = LogCopyerThread(DataModel.matchingfiles)
         else:
-            err = logfetcher.copyfiles(selectedfiles, self.options_panel.get_logdestinationpath(), self.options_panel.get_servername(),
-                                       self.options_panel.zip_filename.GetLineText(0), self, zipoption)
-        if (err != None):
-            self.ErrorDialog(err, "", "")
+            lcthread = LogCopyerThread(selectedfiles)
+        lcthread.start()
+        pd = PopupDialog.ProgressDialog(self, lcthread, message = "Copying files...")
 
         ''' save the typed in server names to history.txt '''
-        self.options_panel.server_choices.append(self.options_panel.get_servername())
+        DataModel.options_panel.server_choices.append(self.options_panel.get_servername())
         config.write_servername_history(self.options_panel.server_choices)
-        self.options_panel.servername_txtctrl.AutoComplete(self.options_panel.server_choices)
+        DataModel.options_panel.servername_txtctrl.AutoComplete(self.options_panel.server_choices)
 
         # output results to the screen
         self.result_text.SetLabel("Saved " + str(len(self.matchingfiles)) + " files")
 
-    # If there is a error with opening Windows paths, servers, file permissions etc show an error to user
-    def ErrorDialog(self, matchingfiles, path, servername):
-        if type(matchingfiles) is not list:
-            errorcode = matchingfiles
-            print "\nERROR\n" + errorcode + "\n" + servername + "\n" + path + "\n"
-            if "Error 53" in errorcode or "Error 1396" in errorcode:
-                dlg = wx.MessageDialog(self, errorcode + "\n" + servername, 'Error', wx.OK | wx.ICON_INFORMATION)
-            else:
-                dlg = wx.MessageDialog(self, errorcode + "\n" + path[len(servername) + 6:], 'Error', wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-            return True
-        return False
-
-    def get_day(self, datepicker):
-        '''Process data from picked date'''
-        selecteddate = datepicker.GetValue()
-        month = selecteddate.Month + 1
-        day = selecteddate.Day
-        year = selecteddate.Year
-        return date(year, month, day)
-
-    def get_prevday(self):
-        epoch = datetime.utcfromtimestamp(0)
-        today = datetime.today()
-        yesterday = (today - epoch).total_seconds() - 86400
-        return date.fromtimestamp(yesterday)
