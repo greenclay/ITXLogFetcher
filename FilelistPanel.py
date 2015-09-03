@@ -1,4 +1,4 @@
-__author__ = 'Administrator'
+__author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import wx
 import wx.dataview as dv
 import config

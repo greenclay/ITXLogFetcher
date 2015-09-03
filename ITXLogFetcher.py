@@ -1,4 +1,4 @@
-__author__ = 'yukisawa@gmail.com'
+__author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import wx
 from FilelistPanel import FilelistPanel
 from OptionsPanel import OptionsPanel
@@ -6,7 +6,9 @@ from DataModel import DataModel
 
 
 class ITXLogFetcher(wx.Frame):
-    """Main Frame holding the main panel."""
+    """ Main file that holds the main wxPython panel.
+        intializes
+    """
 
     def __init__(self, parent, title):
         super(ITXLogFetcher, self).__init__(parent, title=title, size=(750, 900), pos = (400, 100))

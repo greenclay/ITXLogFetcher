@@ -1,5 +1,5 @@
+__author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import zipfile
-import shutil
 from DataModel import DataModel
 
 
@@ -111,7 +111,7 @@ def check_valid_logfile(filename):
         year = line[6:]
 '''
 def unzip_file(filename):
-    print "unzupe_file - " + filename
+    print "unzip file - " + filename
     if zipfile.is_zipfile(filename):
         print "0 checked if is zip"
         zfile = zipfile.ZipFile(filename)

@@ -1,4 +1,4 @@
-__author__ = 'Administrator'
+__author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import wx
 import os
 import config
@@ -140,8 +140,8 @@ class OptionsPanel(wx.Panel):
         vsizer = wx.BoxSizer(wx.VERTICAL)
         vsizer.Add(description_text, 0)
         for check, text in checklist_group[0:2]:
-            vsizer.Add(check, 0, wx.ALIGN_LEFT | wx.TOP, 10)
-            vsizer.Add(text, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.TOP, 10)
+            vsizer.Add(check, 0, wx.ALIGN_LEFT | wx.TOP, 15)
+            vsizer.Add(text, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.TOP, 5)
         vsizer.Add(cb3, 0, wx.ALIGN_LEFT | wx.TOP, 10)
 
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -178,7 +178,7 @@ class OptionsPanel(wx.Panel):
             if servername not in paths:
                 PopupDialog.ErrorDialog.popup("You chose a local path. Please choose a path in the chosen server: " + servername, "", "", None)
             else:
-                self.otherpath_txtctrl.SetLabel(paths[len(servername) + 6:])
+                self.otherpath_txtctrl.SetLabel(paths[len(servername) + 3:])
                 self.checklist_group[2][0].SetValue(True)
         # Compare this with the debug above; did we change working dirs?
 

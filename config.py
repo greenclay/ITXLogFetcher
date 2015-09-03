@@ -1,8 +1,19 @@
-__author__ = 'Administrator'
+__author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import os
 
-zipoption = 0
+""" Manages The reading/writing of config.txt and history.txt
 
+    config.txt - consists of one line with either zip=0 or zip=1
+                 zip=1 means the app will start with "yes" for the "Archive logs into a zip file" option
+                 zip=0 means it will start with "no"
+    history.txt - Holds a history of the server names typed into the "Server" box
+                  A servername is saved to history.txt when a user pushes "Save selected files to folder"
+                  Saves the last number_of_servernames_to_save_in_history typed in server names
+"""
+zipoption = 0 # default zip option when intializing config.txt
+number_of_servernames_to_save_in_history = 20
+
+""" read config.txt """
 def read_config():
     global zipoption
     check_if_config_valid()
@@ -12,6 +23,9 @@ def read_config():
         zipoption = int(line[1])
         return zipoption
 
+""" Check if config.txt exists and is in the right format, which is one line that consists of either "zip=1" or "zip=0"
+    If its not in the right format or does not exist then create and intialize a history.txt
+"""
 def check_if_config_valid():
     if not os.path.isfile("config.txt"):
         init_config()
@@ -33,8 +47,10 @@ def write_config(passed_zipoption):
 
 
 def write_servername_history(history):
+    global number_of_servernames_to_save_in_history
     seen = set()
-    history = [x for x in history if x not in seen and not seen.add(x)][-20:]
+    # get the last number_of_servernames_to_save_in_history servernames typed in and save them to history.txt
+    history = [x for x in history if x not in seen and not seen.add(x)][-number_of_servernames_to_save_in_history:]
     with open("history.txt", "r+") as myfile:
         for line in history:
             myfile.write(line + "\n")
