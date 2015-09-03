@@ -12,7 +12,6 @@ from DataModel import DataModel
 A myfile tuple in matchingfiles consists of filepath, filename, servername, last modified date
 '''
 class file_handler(object):
-
     def __init__(self, myfile, log_destination_path):
         if zipfile.is_zipfile(myfile[0]):
             self.unzip_file(myfile, log_destination_path)

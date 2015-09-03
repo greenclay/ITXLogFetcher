@@ -2,9 +2,14 @@ __author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import datetime
 from datetime import date
 from operator import itemgetter
+
+"""
+    Static class. Holds data that other classes cam call for
+    matchingfiles - holds data about files found on the server and folders specified by the user
+
+"""
 class DataModel(object):
     matchingfiles = []
-    testvar = 1234
     options_panel = None
     test = False
     sort_ascending = 1
@@ -61,9 +66,9 @@ class DataModel(object):
         formatted_matchingfiles = []
         for myfile in DataModel.matchingfiles:
             filename = myfile[1]
-            date = str(myfile[3].month).zfill(2) + "-" + str(myfile[3].day).zfill(2) + "-" + str(myfile[3].year)
+            file_date = str(myfile[3].month).zfill(2) + "-" + str(myfile[3].day).zfill(2) + "-" + str(myfile[3].year)
             path = "C:\\" + myfile[0][len(myfile[2]) + 6:]
-            formatted_matchingfiles.append((filename, date, path, DataModel.get_servername(), myfile))
+            formatted_matchingfiles.append((filename, file_date, path, DataModel.get_servername(), myfile))
 
         # Flip the sort order from ascending to descending or vice versa
         # if the same sorting is selected twice in a row

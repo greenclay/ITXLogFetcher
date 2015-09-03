@@ -6,13 +6,11 @@ import os
 from DataModel import DataModel
 import PopupDialog
 import shutil
-import write_zip
 import subprocess
-import file_handler
 import zipfile
 
-''' LogFetcherThread is created when FilelistPanel calls OnApply()
-
+''' LogFetcherThread is created when FilelistPanel calls OnApply() which is when "Search for files" button is pressed
+    it takes
 '''
 ''' LogCopyerThread is created when FilelistPanel calls OnSave() which is when the user presses "Save selected files to folder"
     it takes a list of files on the selected ITX server and copies them onto the local computer.
@@ -177,25 +175,25 @@ class LogCopyerThread(Thread):
 
         self.done = True
 
-    def unzip_file(self, filename):
-        print "unzip_file - " + filename
-        if zipfile.is_zipfile(filename):
-            print "0 checked if is zip"
-            zfile = zipfile.ZipFile(filename)
-            dir = self.log_destination_path + "\\unzipped\\"
-            print "2 before " + dir
-            zfile.extractall(dir)
-            print "3 after " + dir
-            #
-            # with zipfile.ZipFile(filename) as zfile:
-            #     print "1 is zip file - " + DataModel.get_logdestinationpath()
-            #     dir = DataModel.get_logdestinationpath() + "\\unzipped\\"
-            #     print "2 before " + dir
-            #     zfile.extractall(dir)
-            #     print "3 after " + dir
-        else:
-            file_handler.check_valid_logfile(filename)
-            print "is not zip"
+    # def unzip_file(self, filename):
+    #     print "unzip_file - " + filename
+    #     if zipfile.is_zipfile(filename):
+    #         print "0 checked if is zip"
+    #         zfile = zipfile.ZipFile(filename)
+    #         dir = self.log_destination_path + "\\unzipped\\"
+    #         print "2 before " + dir
+    #         zfile.extractall(dir)
+    #         print "3 after " + dir
+    #         #
+    #         # with zipfile.ZipFile(filename) as zfile:
+    #         #     print "1 is zip file - " + DataModel.get_logdestinationpath()
+    #         #     dir = DataModel.get_logdestinationpath() + "\\unzipped\\"
+    #         #     print "2 before " + dir
+    #         #     zfile.extractall(dir)
+    #         #     print "3 after " + dir
+    #     else:
+    #         file_handler.check_valid_logfile(filename)
+    #         print "is not zip"
 
     # def rename(self, filename):
     #     if "MIRANDA_LOGS\TXPLAY\TXPlayTrace" in myfile[0]:

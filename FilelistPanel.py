@@ -83,19 +83,18 @@ class FilelistPanel(wx.Panel):
         self.datefrom.SetValue(datefrom_date)
         self.label = wx.StaticText(self, -1, "")
 
-        # labels
+        # initialize date from and date to labels
         datefromlabel = wx.StaticText(self, -1, label = "From: ", size = (40, -1))
         datetolabel = wx.StaticText(self, -1, "To: ")
 
 
-        # apply button
+        # init Search for files button
         applybutton = wx.Button(self, -1, label = "Search for files")
         applybutton.Bind(wx.EVT_BUTTON, self.OnApply)
         applybutton.SetDefault()
 
-        # apply button
+        # init Save files button
         savebutton = wx.Button(self, -1, label = "Save selected files to folder")
-
         savebutton.Bind(wx.EVT_BUTTON, self.OnSave)
 
         ''' Add controls to Sizer '''
@@ -147,7 +146,8 @@ class FilelistPanel(wx.Panel):
         PopupDialog.ProgressDialog(self, lfthread, message = "Searching for files...")
         self.UpdateFilelist()
 
-    ''' Update the file list by deleting everything on it then adding all files in DataModel.matchingfiles
+    ''' Update the file list by deleting everything with filelist.DeleteAllItems()
+        then adding all files in DataModel.matchingfiles into the filelist
     '''
     def UpdateFilelist(self):
         self.filelist.DeleteAllItems()

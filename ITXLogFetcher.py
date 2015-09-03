@@ -4,6 +4,7 @@ from FilelistPanel import FilelistPanel
 from OptionsPanel import OptionsPanel
 from DataModel import DataModel
 
+'''              MAIN METHOD              '''
 
 class ITXLogFetcher(wx.Frame):
     """ Main file that holds the main wxPython panel.
@@ -15,6 +16,7 @@ class ITXLogFetcher(wx.Frame):
 
         panel = wx.Panel(self)
 
+        # initialize OptionsPanel and FilelistPanel
         self.options_panel = OptionsPanel(panel)
         self.filelist_panel = FilelistPanel(panel)
         self.options_panel.filelist_panel = self.filelist_panel

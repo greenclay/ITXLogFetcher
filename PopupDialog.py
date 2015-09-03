@@ -4,8 +4,10 @@ import wx
 from DataModel import DataModel
 '''
 Class that represents pop up windows that appear when there is an error or file operation occuring
-ProgressDialog is called by
 '''
+"""
+ProgressDialog is called when "Search for files" or "Save selected files to folder" button is pressed and displays a progress bar
+"""
 class ProgressDialog:
     def __init__(self, panel, thread, message):
         self.abort = False
@@ -15,22 +17,22 @@ class ProgressDialog:
                                 parent = self.panel,
                                 style = wx.PD_APP_MODAL
                                         | wx.PD_CAN_ABORT
-                                        # | wx.PD_CAN_SKIP
                                         | wx.PD_ELAPSED_TIME
-                                # | wx.PD_ESTIMATED_TIME
-                                # | wx.PD_REMAINING_TIME
-                                # | wx.PD_AUTO_HIDE
                                 )
 
         while 1:
             wx.MilliSleep(250)
-            cont, skip = self.dialog.Pulse() #continue, skip. if continue = False then "Cancel" button was pressed
+            cont, skip = self.dialog.Pulse() #continue, skip.
+            # When the "Cancel" button is pressed, Pulse() returns cont=false
             if cont == False:
                 thread.abort = True
             if thread.done:
                 self.dialog.Destroy()
                 break
-
+"""
+    ErrorDialog is a pop-up window that shows when the user enters invalid information for the Servername or
+    the system can not find the folder paths
+"""
 class ErrorDialog(object):
     @staticmethod
     def popup(errorcode, path, servername, thread):
