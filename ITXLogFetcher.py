@@ -1,14 +1,14 @@
 __author__ = 'Yuki Sawa, yukisawa@gmail.com'
 import wx
-from FilelistPanel import FilelistPanel
-from OptionsPanel import OptionsPanel
+from TopPanel import TopPanel
+from BottomPanel import BottomPanel
 from DataModel import DataModel
 
-'''              MAIN METHOD              '''
+'''              CONTAINS MAIN METHOD              '''
 
 class ITXLogFetcher(wx.Frame):
     """ Main file that holds the main wxPython panel.
-        intializes
+        intializes BottomPanel and TopPanel and DataModel
     """
 
     def __init__(self, parent, title):
@@ -16,33 +16,39 @@ class ITXLogFetcher(wx.Frame):
 
         panel = wx.Panel(self)
 
-        # initialize OptionsPanel and FilelistPanel
-        self.options_panel = OptionsPanel(panel)
-        self.filelist_panel = FilelistPanel(panel)
-        self.options_panel.filelist_panel = self.filelist_panel
-        self.filelist_panel.options_panel = self.options_panel
-        DataModel.options_panel = self.options_panel
+        # initialize OptionsPanel and FilelistPanel, pass their references to each other
+        # also pass it to DataModel
+        self.bottom_panel = BottomPanel(panel)
+        self.top_panel = TopPanel(panel)
+        self.bottom_panel.top_panel = self.top_panel
+        self.top_panel.bottom_panel = self.bottom_panel
+        DataModel.bottom_panel = self.bottom_panel
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.filelist_panel, 3, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border=10)
-        sizer.Add(self.options_panel, 1, wx.EXPAND | wx.ALL, border=10)
+        sizer.Add(self.top_panel, 3, wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border=10)
+        sizer.Add(self.bottom_panel, 1, wx.EXPAND | wx.ALL, border=10)
+
+        # init the panel and layout, then Show() it
         panel.SetSizerAndFit(sizer)
         panel.Layout()
         self.Show()
 
+        # for testing
         # self.testing()
 
+
+    """ testing methods """
     def testing(self):
         print "Running ITXLogFetcher.testing()"
-        """ testing methods """
         DataModel.testing()
         # logfetcher.testing3()
-        self.options_panel.testing1()
-        self.filelist_panel.testing2()
-        print len(self.filelist_panel.matchingfiles)
+        self.bottom_panel.testing1()
+        self.top_panel.testing2()
+        print len(self.top_panel.matchingfiles)
         print "FINISHED ITXLogFetcher.testing()"
 
 
+''' init wx.App class which contains entire app '''
 class App(wx.App):
     def __init__(self):
         wx.App.__init__(self)
@@ -50,7 +56,7 @@ class App(wx.App):
     def OnExit(self):
         pass
 
-
+''' __main__ method for entire app '''
 if __name__ == '__main__':
     app = App()
     frame = ITXLogFetcher(None, title = "ITX Log Fetcher ver 1.1")

@@ -21,9 +21,10 @@ class ProgressDialog:
                                 )
 
         while 1:
-            wx.MilliSleep(250)
+            wx.MilliSleep(250) # move the bar every 250 milliseconds
             cont, skip = self.dialog.Pulse() #continue, skip.
             # When the "Cancel" button is pressed, Pulse() returns cont=false
+            # if cont == false then stop the ProgressDialog and end the file copying/searching thread
             if cont == False:
                 thread.abort = True
             if thread.done:
@@ -40,8 +41,8 @@ class ErrorDialog(object):
             thread.abort = True
         print "\nERROR\n" + errorcode + "\n" + servername + "\n" + path + "\n"
         if "Error 53" in errorcode or "Error 1396" in errorcode:
-            dlg = wx.MessageDialog(DataModel.options_panel, errorcode + "\n" + servername, 'Error', wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(DataModel.bottom_panel, errorcode + "\n" + servername, 'Error', wx.OK | wx.ICON_INFORMATION)
         else:
-            dlg = wx.MessageDialog(DataModel.options_panel, errorcode + "\n" + path, 'Error', wx.OK | wx.ICON_INFORMATION)
+            dlg = wx.MessageDialog(DataModel.bottom_panel, errorcode + "\n" + path, 'Error', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()

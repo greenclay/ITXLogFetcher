@@ -18,20 +18,19 @@ import os
         The third column is the path to the file on the server. The fourth is the name of the server.
         You can select certain files to save using shift/ctrl and the left mouse button.
         If no files are selected then all files will be saved.
-    2. The "Search for files" "Save selected files to folder"
+    2. The "Search for files" and "Save selected files to folder" buttons
         The "Search" button tells the app to search for the files in the selected server/folders and show the results on the file list.
         "Save files to folder" button saves the selected files into the specified folder. The default save folder is "C:\ITXLogFetcher_logs"
-    3. The two DatePickerCtrl drop downs
+    3. The two DatePickerCtrl drop downs which allow you to select the dates the files' last modified date
     4. The TextCtrl box to type in the server name
     5. The "Sory files by..." drop down control
     6. The "Folder to save log files to" TextCtrl box where you can type in the folder to save the logs files to
 
 '''
-class FilelistPanel(wx.Panel):
+class TopPanel(wx.Panel):
     """Constructor"""
 
     def testing2(self):
-        print DataModel.matchingfiles
         datefrom_date = wx.DateTime()
         datefrom_date.Set(24, 5, 2015)
         self.datefrom.SetValue(datefrom_date)
@@ -71,7 +70,7 @@ class FilelistPanel(wx.Panel):
     def InitDateUI(self):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        ''' INITIALIZE calendar boxes '''
+        ''' INITIALIZE DatePickers '''
         self.datefrom = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size = (135, -1))
         self.dateto = wx.DatePickerCtrl(self, -1, style = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY, size = (146, -1))
 
@@ -118,7 +117,7 @@ class FilelistPanel(wx.Panel):
         :return: None
         '''
         # sort_selection has 3 choices:
-        # 0 = file name, 1 = date, 2 = path
+        # 0 = sort by file name, 1 = sort by date, 2 = sort by path
         sort_selection = event.GetEventObject().GetCurrentSelection()
         formatted_matchingfiles = DataModel.sortColumn(sort_selection)
 
@@ -168,12 +167,16 @@ class FilelistPanel(wx.Panel):
         :param event:
         :return:
         '''
-        selected = self.filelist.GetSelections() # returns a list of the selected files in the filelist
+        # get the files selected in the filelist
+        selected = self.filelist.GetSelections()
         selectedfiles = []
         for s in selected:
             # get the value of each selected file and append them to a list
             selectedfiles.append(self.filelist.GetValue(s.GetID() - 1, 4))
 
+        # If there were no files selected then copy all the files
+        # otherwise only copy the selected.
+        # Start the copying thread.
         if len(selectedfiles) == 0:
             lcthread = LogCopyerThread(DataModel.matchingfiles)
         else:
@@ -182,9 +185,9 @@ class FilelistPanel(wx.Panel):
         pd = PopupDialog.ProgressDialog(self, lcthread, message = "Copying files...")
 
         ''' save the typed in server names to history.txt '''
-        DataModel.options_panel.server_choices.append(self.options_panel.get_servername())
-        config.write_servername_history(self.options_panel.server_choices)
-        DataModel.options_panel.servername_txtctrl.AutoComplete(self.options_panel.server_choices)
+        DataModel.bottom_panel.server_choices.append(self.bottom_panel.get_servername())
+        config.write_servername_history(self.bottom_panel.server_choices)
+        DataModel.bottom_panel.servername_txtctrl.AutoComplete(self.bottom_panel.server_choices)
 
         # output results to the screen
         self.result_text.SetLabel("Saved " + str(len(self.matchingfiles)) + " files")

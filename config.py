@@ -8,7 +8,7 @@ import os
                  zip=0 means it will start with "no"
     history.txt - Holds a history of the server names typed into the "Server" box
                   A servername is saved to history.txt when a user pushes "Save selected files to folder"
-                  Saves the last number_of_servernames_to_save_in_history typed in server names
+                  Saves the last number_of_servernames_to_save_in_history used server names
 """
 zipoption = 0 # default zip option when intializing config.txt
 number_of_servernames_to_save_in_history = 20
@@ -24,7 +24,7 @@ def read_config():
         return zipoption
 
 """ Check if config.txt exists and is in the right format, which is one line that consists of either "zip=1" or "zip=0"
-    If its not in the right format or does not exist then create and intialize a history.txt
+    If its not in the right format or does not exist then create and intialize a config.txt
 """
 def check_if_config_valid():
     if not os.path.isfile("config.txt"):
@@ -34,11 +34,12 @@ def check_if_config_valid():
         if configfile[0] != "zip=0" and configfile[0] != "zip=1":
             init_config()
 
+''' initialize config.txt as a text file with one line, 'zip=0' '''
 def init_config():
     with open("config.txt", "w") as configfile:
         configfile.write("zip=0")
 
-
+''' take passed_zipoption and write it to ocnfig.txt '''
 def write_config(passed_zipoption):
     global zipoption
     with open("config.txt", "w") as configfile:
@@ -46,6 +47,10 @@ def write_config(passed_zipoption):
         zipoption = passed_zipoption
 
 
+''' Write the last X number of servers used
+    X = number_of_servernames_to_save_in_history
+    Servernames are written to history.txt when the user presses "Save selected file to folder"
+'''
 def write_servername_history(history):
     global number_of_servernames_to_save_in_history
     seen = set()
@@ -55,7 +60,9 @@ def write_servername_history(history):
         for line in history:
             myfile.write(line + "\n")
 
-
+''' read history.txt and populate the AutoComplete
+    for the 'Server' text box;l
+'''
 def read_servername_history():
     if not os.path.isfile("history.txt"):
         open("history.txt", "w")

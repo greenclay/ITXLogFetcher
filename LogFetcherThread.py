@@ -7,20 +7,23 @@ from DataModel import DataModel
 import PopupDialog
 import shutil
 import subprocess
-import zipfile
+import write_zip
 
-''' LogFetcherThread is created when FilelistPanel calls OnApply() which is when "Search for files" button is pressed
+''' LogFetcherThread is created when FilelistPanel calls TopPanel.OnApply() which is when "Search for files" button is pressed
     it takes
 '''
-''' LogCopyerThread is created when FilelistPanel calls OnSave() which is when the user presses "Save selected files to folder"
+''' LogCopyerThread is created when FilelistPanel calls TopPanel.OnSave() which is when the user presses "Save selected files to folder"
     it takes a list of files on the selected ITX server and copies them onto the local computer.
 '''
 '''
+    There needs to be 2 threads when TopPanel.OnSave() and TopPanel.OnApply() are called.
+    1 thread handles the copying/searching while the other handles the progress bar, ProgressDialog
+
     myfile tuple layout = ( filepath, filename, servername, timestamp )
     A myfile tuple in matchingfiles consists of filepath, filename, servername, last modified date
 '''
 
-# Thread class that executes processing
+''' Thread that find files in the specified server and folders '''
 class LogFetcherThread(Thread):
     """Worker Thread Class."""
     def __init__(self,  datefrom, dateto):
@@ -51,31 +54,34 @@ class LogFetcherThread(Thread):
         servername = self.servername
         DataModel.matchingfiles = []
 
+        # if there are no paths selected in the check boxes, throw an Error Popup
         if logpaths == "error no folders selected in checklist":
             self.done = True
             PopupDialog.ErrorDialog.popup("Please select a path to search", "", "", self)
             return
 
+        # for each selected checkbox path look for files
         for path in logpaths:
             matchingfiles = []  # matchingfiles contains tuples of form [entire file path, file name only]
             try:
-                print(logpaths)
-                print("path - " + path)
                 for filename in os.listdir(path):
                     if self.abort == True:
                         self.done = True
                         return
                     filepath = os.path.join(path, filename)
-                    # print path
-                    # print(filename)
-                    # print filepath
+                    # Check if the filepath is an actual file
+                    # Then use getmtime() to find the file's last modified date
                     if os.path.isfile(filepath):
                         try:
                             mtime = os.path.getmtime(filepath)
                         except OSError:
                             print("File " + filename + " does not exist")
+                            # if there was an error getting the last modified date, give it mtime=0
                             mtime = 0
 
+                        # Check if the file's modified date falls within the date range specified by the
+                        # user in the DatePickers.
+                        # If it does add it to matchingfiles
                         timestamp = date.fromtimestamp(mtime)
                         if datefrom <= timestamp <= dateto:
                             ''' create a myfile tuple then append it to matchingfiles
@@ -95,7 +101,7 @@ class LogFetcherThread(Thread):
         return
 
     def abort(self):
-        """abort worker thread."""
+        """abort worker thread when user presses Cancel."""
         # Method for use by main thread to signal an abort
         self._want_abort = 1
 
@@ -108,7 +114,6 @@ class LogCopyerThread(Thread):
         self.abort = False
 
         (self.zipoption, self.zip_filename) = DataModel.get_zipconfig()
-        print self.zipoption
         self.log_destination_path = DataModel.get_logdestinationpath()
 
         # This starts the thread running on creation, but you could
@@ -134,6 +139,10 @@ class LogCopyerThread(Thread):
                 self.done = True
                 return
 
+            # if the file has "MIRADA_LOGS\TXPLAY" in its file path, add _txplay_ to its file name
+            # if the file has "ITXLogs" in its file path, add _itxlogs_
+            # otherwise don't add anything
+            # ie Servername_txplay_filename.txt or Servername_itxlogs_filename.txt
             if "MIRANDA_LOGS\TXPLAY".lower() in myfile[0].lower():
                 filename = myfile[2] + "_txplay_" + myfile[1]
             elif "ITXLogs".lower() in myfile[0].lower():
@@ -144,12 +153,11 @@ class LogCopyerThread(Thread):
             print "Copying: " + myfile[1]
             print "To: " + filename + "\n"
             try:
-                ''' unzip file for ITX logs onto Splunk plans '''
-                # self.unzip_file(myfile[0])
-                # file_handler.unzip_file(myfile, log_destination_path)
-                ''' '''
+                # copy the files to the user's computer
                 shutil.copy2(myfile[0], log_destination_path + "\\" + filename)
             except WindowsError as err:
+                # if there's an error with the copying, like permisison denied
+                # show an ErrorDialog pop up
                 self.done = True
                 print("Error with: " + err.filename)
                 print("Error " + str(err.winerror) + " - " + err.strerror)
@@ -157,6 +165,8 @@ class LogCopyerThread(Thread):
                 PopupDialog.ErrorDialog.popup(errorcode, log_destination_path, myfile[2], self)
                 return str(err.strerror)
             except IOError as (errno, strerror):
+                # if there's an error with the copying, like permisison denied
+                # show an ErrorDialog pop up
                 self.done = True
                 print("Error with: " + myfile[0])
                 print("Error " + str(errno) + " - " + strerror)
@@ -174,29 +184,3 @@ class LogCopyerThread(Thread):
             subprocess.Popen('explorer "{0}"'.format(log_destination_path))
 
         self.done = True
-
-    # def unzip_file(self, filename):
-    #     print "unzip_file - " + filename
-    #     if zipfile.is_zipfile(filename):
-    #         print "0 checked if is zip"
-    #         zfile = zipfile.ZipFile(filename)
-    #         dir = self.log_destination_path + "\\unzipped\\"
-    #         print "2 before " + dir
-    #         zfile.extractall(dir)
-    #         print "3 after " + dir
-    #         #
-    #         # with zipfile.ZipFile(filename) as zfile:
-    #         #     print "1 is zip file - " + DataModel.get_logdestinationpath()
-    #         #     dir = DataModel.get_logdestinationpath() + "\\unzipped\\"
-    #         #     print "2 before " + dir
-    #         #     zfile.extractall(dir)
-    #         #     print "3 after " + dir
-    #     else:
-    #         file_handler.check_valid_logfile(filename)
-    #         print "is not zip"
-
-    # def rename(self, filename):
-    #     if "MIRANDA_LOGS\TXPLAY\TXPlayTrace" in myfile[0]:
-    #         filename = myfile[2] + "_txplay_" + myfile[1]
-    #     else:
-    #         filename = myfile[2] + "_" + myfile[1]

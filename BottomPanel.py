@@ -19,14 +19,16 @@ import DataModel
     If the option is saved, the next time the app is opened again it will default to the option that was saved.
     4. The "Save zip file as:" TextCtrl box that specifies the filename of the zip file if you choose to make one.
 '''
-class OptionsPanel(wx.Panel):
+class BottomPanel(wx.Panel):
+    # default paths to the ITX and TXPlay log folders
+    ITXLogPath = "C:\ITXLogs"
+    TXPlayLogPath = "C:\MIRANDA_LOGS\TXPLAY\TXPlayTrace"
 
     ''' Method to set varibles up for quick testing'''
     def testing1(self):
         self.servername_txtctrl.SetValue("YUKI-PC")
         self.checklist_group[0][0].SetValue(True)
         self.checklist_group[1][0].SetValue(True)
-        print "testing GetLineText " + self.zip_filename.GetLineText(0)
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent = parent)
@@ -88,6 +90,7 @@ class OptionsPanel(wx.Panel):
         savezipoption_button = wx.Button(self, -1, "Save current setting to zip files", (25, 25))
         self.Bind(wx.EVT_BUTTON, self.OnSaveZipOption, savezipoption_button)
 
+        # add all parts to hsizer
         hsizer4.Add(radiobuttons, 0)
         hsizer4.Add((10, 0))
         hsizer4.Add(savezipoption_button, 0, wx.ALIGN_CENTER_VERTICAL)
@@ -101,42 +104,51 @@ class OptionsPanel(wx.Panel):
         sortingChoices = ["Sort files by...", "File name", "Modified date", "File path"]
         cb = wx.ComboBox(self, -1, "Sort files by...", (0, 0), (148, -1),
                          sortingChoices, style = wx.CB_DROPDOWN | wx.CB_READONLY)
+        # bind the button to OnSortColumnBySelection()
         self.Bind(wx.EVT_COMBOBOX, self.OnSortColumnBySelection, cb)
         return cb
 
-    ''' Intialize the TextCtrl that lets you specify what server to search
-    '''
+    ''' Intialize the "Server" TextCtrl box that lets you specify what server to search '''
     def InitServernameTextCtrl(self):
         hsizer = wx.BoxSizer(wx.HORIZONTAL)
-        server_choices = config.read_servername_history()
+        # get the history of servers typed in
+        server_history_choices = config.read_servername_history()
 
         servername_txtctrl = wx.TextCtrl(self, -1, size = (134, -1))
-        servername_txtctrl.AutoComplete(server_choices)
+        # enable AutoComplete for the server name
+        # use server_choices as choices for the AutoComplete
+        servername_txtctrl.AutoComplete(server_history_choices)
 
         cb = self.InitSortByOptions()
         hsizer.Add(wx.StaticText(self, -1, "Server: "), 0, wx.ALIGN_CENTER_VERTICAL)
         hsizer.Add(servername_txtctrl, 0)
         hsizer.Add((30, 0), 0)
         hsizer.Add(cb, 0)
-        return hsizer, servername_txtctrl, server_choices
+        return hsizer, servername_txtctrl, server_history_choices
 
     ''' intialize the "Path to the log files" textboxes and check boxes '''
     def InitCheckBoxes(self):
+
         description_text = wx.StaticText(self, -1, "Folders to search: ")
         cb1 = wx.CheckBox(self, -1, "ITXLogs")  # , (65, 40), (150, 20), wx.NO_BORDER)
         cb2 = wx.CheckBox(self, -1, "TXPlay")  # , (65, 60), (150, 20), wx.NO_BORDER)
         cb3 = wx.CheckBox(self, -1, "Other")  # , (65, 80), (150, 20), wx.NO_BORDER)
-        text1 = wx.TextCtrl(self, -1, "C:\ITXLogs")
-        text2 = wx.TextCtrl(self, -1, "C:\MIRANDA_LOGS\TXPLAY\TXPlayTrace")
+
+        # the default file paths to ITXLogs and TXPlay
+        text1 = wx.TextCtrl(self, -1, BottomPanel.ITXLogPath)
+        text2 = wx.TextCtrl(self, -1, BottomPanel.TXPlayLogPath)
+        # set "Other" path
         self.otherpath_txtctrl = wx.TextCtrl(self, -1, "")
 
+        #init Select folder for Other
         open_networkfolder_button = wx.Button(self, -1, "Select folder", (25, 25))
         self.Bind(wx.EVT_BUTTON, self.OpenNetworkFolderButton, open_networkfolder_button)
-        checklist_group = []
+        checklist_group = [] # the list that holds the checkboxes
         checklist_group.append([cb1, text1])
         checklist_group.append([cb2, text2])
         checklist_group.append([cb3, self.otherpath_txtctrl])
 
+        # add TextCtrl and CheckBoxs to BoxSizer
         vsizer = wx.BoxSizer(wx.VERTICAL)
         vsizer.Add(description_text, 0)
         for check, text in checklist_group[0:2]:
@@ -152,9 +164,9 @@ class OptionsPanel(wx.Panel):
         vsizer.Add(hsizer, 1, wx.EXPAND)
         return vsizer, checklist_group
 
-    ''' call SortBy method in filelist_panel class '''
+    ''' call SortBy method in top_panel class '''
     def OnSortColumnBySelection(self, event):
-        self.filelist_panel.OnSortColumnBySelection(event)
+        self.top_panel.OnSortColumnBySelection(event)
 
     ''' Method that creates a DirDialog pop up window that lets the user choose a folder to search on the selected server
     The window is opened when the "Select folder" button next to "Other" in the "Path to the log files" section is pressed
@@ -186,9 +198,12 @@ class OptionsPanel(wx.Panel):
         # BAD things can happen otherwise!
         dlg.Destroy()
 
+    ''' Method that handles the 'Select folder to save files to'
+        Pop ups a DirDialog to select a folder on the server
+    '''
     def OpenFileButton(self, event):
         dlg = wx.DirDialog(
-            self, message = "Choose a file",
+            self, message = "Choose a folder to save to",
             defaultPath = os.path.expanduser('~') + '\Desktop',
             # defaultFile = "",
             # wildcard = wildcard,
@@ -207,28 +222,24 @@ class OptionsPanel(wx.Panel):
         # BAD things can happen otherwise!
         dlg.Destroy()
 
+    ''' write the zip option to config.txt when 'Save current setting to zip file' button is pressed '''
     def OnSaveZipOption(self, event):
         config.write_config(self.get_zipoption())
 
-    def get_logsourcepath(self):
-        logpaths = []
-        for check in self.checklist_group:
-            if check[0].GetValue() == True:
-                logpaths.append("\\\\" + self.servername_txtctrl.GetLineText(0) + "\C$\\" + check[1].GetValue())
-        return logpaths
-
+    ''' return text in 'Folder to save files to' box '''
     def get_logdestinationpath(self):
-        print "self.logdestination_text - " + str(self.logdestination_text)
-        print self.logdestination_text.GetLineText(0)
-        # return self.logdestination_text.GetLineText(0)
         return self.logdestination_text.GetLineText(0)
 
+    ''' get the currently selected 'Archive logs into a zip file' option
+        either a yes or no
+    '''
     def get_zipoption(self):
-        op = self.radiobuttons.GetSelection()
-        return op
+        return self.radiobuttons.GetSelection()
 
+    ''' return text in 'Server' box '''
     def get_servername(self):
         return self.servername_txtctrl.GetLineText(0)
 
+    ''' return zip file name in 'Save zip file as' '''
     def get_zip_filename(self):
         return self.zip_filename.GetLineText(0)

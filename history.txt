@@ -1,3 +1,2 @@
-YUki-PC
-Yszsd
-yuki-pc
+ITX1003A
+ITX1023A

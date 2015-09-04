@@ -4,13 +4,14 @@ from datetime import date
 from operator import itemgetter
 
 """
-    Static class. Holds data that other classes cam call for
+    Static class. Holds data that other classes can call for
     matchingfiles - holds data about files found on the server and folders specified by the user
-
+    The filelist lists the matchingfiles
 """
+
 class DataModel(object):
     matchingfiles = []
-    options_panel = None
+    bottom_panel = None
     test = False
     sort_ascending = 1
     prev_sort_selection = None
@@ -27,26 +28,22 @@ class DataModel(object):
         zip_filename is the filename of the zip file to create
         :return:
         '''
-        return DataModel.options_panel.get_zipoption(), DataModel.options_panel.get_zip_filename()
+        return DataModel.bottom_panel.get_zipoption(), DataModel.bottom_panel.get_zip_filename()
 
     @staticmethod
     def get_logdestinationpath():
-        return DataModel.options_panel.get_logdestinationpath()
+        return DataModel.bottom_panel.get_logdestinationpath()
 
     @staticmethod
     def get_servername():
-        return DataModel.options_panel.servername_txtctrl.GetLineText(0)
-
-    @staticmethod
-    def get_servername():
-        return DataModel.options_panel.get_servername()
+        return DataModel.bottom_panel.get_servername()
 
     ''' get the log source paths specified in "Path to the log files" box '''
     @staticmethod
     def get_logsourcepath():
         logpaths = []
         numChecked = 0
-        for check in DataModel.options_panel.checklist_group:
+        for check in DataModel.bottom_panel.checklist_group:
             if check[0].GetValue() == True:
                 numChecked += 1
                 logpaths.append("\\\\" + DataModel.get_servername() + "\C$\\" + check[1].GetValue()[3:])
@@ -55,14 +52,20 @@ class DataModel(object):
             return "error no folders selected in checklist"
         return logpaths
 
+    ''' sort the filelist by the option selected in 'Sort files by...' drop down box
+     '''
     @staticmethod
     def sortColumn(sort_selection):
+        #sort by filename
         if sort_selection == 1:
-            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = lambda x: x[1].lower())  # sort by filename
+            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = lambda x: x[1].lower())
+        #sort by date
         elif sort_selection == 2:
-            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = itemgetter(3))  # sort by date
+            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = itemgetter(3))
+        #sort by path
         elif sort_selection == 3:
-            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = lambda x: x[0].lower())  # sort by path
+            DataModel.matchingfiles = sorted(DataModel.matchingfiles, key = lambda x: x[0].lower())
+        #create a new matchingfiles that is sorted and formatted
         formatted_matchingfiles = []
         for myfile in DataModel.matchingfiles:
             filename = myfile[1]
@@ -80,15 +83,16 @@ class DataModel(object):
             formatted_matchingfiles.reverse()
         return formatted_matchingfiles
 
+    # get the date from the DatePickerCtrl
     @staticmethod
     def get_day(datepicker):
-        '''Process data from picked date'''
         selecteddate = datepicker.GetValue()
         month = selecteddate.Month + 1
         day = selecteddate.Day
         year = selecteddate.Year
         return date(year, month, day)
 
+    # calculate the date before today
     @staticmethod
     def get_prevday():
         epoch = datetime.datetime.utcfromtimestamp(0)
