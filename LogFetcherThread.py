@@ -1,4 +1,4 @@
-__author__ = 'Yuki Sawa, yukisawa@gmail.com'
+
 
 from threading import Thread
 from datetime import date
