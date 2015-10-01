@@ -1,4 +1,4 @@
-__author__ = 'Yuki Sawa, yukisawa@gmail.com'
+
 import os
 
 """ Manages The reading/writing of config.txt and history.txt
