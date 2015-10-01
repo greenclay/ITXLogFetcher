@@ -1,4 +1,4 @@
-__author__ = 'Yuki Sawa, yukisawa@gmail.com'
+
 import wx
 from TopPanel import TopPanel
 from BottomPanel import BottomPanel
