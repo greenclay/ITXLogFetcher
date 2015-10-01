@@ -1,4 +1,4 @@
-__author__ = 'Yuki Sawa, yukisawa@gmail.com'
+
 import wx
 import os
 import config
