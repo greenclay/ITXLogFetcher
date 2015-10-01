@@ -1,4 +1,4 @@
-__author__ = 'Yuki Sawa, yukisawa@gmail.com'
+
 import datetime
 from datetime import date
 from operator import itemgetter
